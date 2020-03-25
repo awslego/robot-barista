@@ -24,28 +24,35 @@ def ddb_write(oid):
     print(response)
 
 def ddb_handle(oid):
+    # 1. change the previous order status
+    response = table.query (
+        IndexName='coffeeType-isCurrent-index',
+        KeyConditionExpression=Key('coffeeType').eq('Latte') & Key('isCurrent').eq('true')
+    )
+    print '1--------'
+    print response['Items']
 
-    #response = table.query (
-    #    KeyConditionExpression=Key('coffeeType').eq('Americano')& Key('isCurrent').eq('true')
-    #)
-    #print '--------'
-    #print response['Items']
-    #if response['Items']['order_id']:
-    #    response = table.put_item(
-    #        Item={
-    #            'order_id':  response['Items']['order_id'],
-    #            'timestamp' :  response['Items']['timestamp'] ,
-    #            'isCurrent': 'false',
-    #            'status': 'complete',
-    #        }
-    #   )
+    if response['Items']:
+        response = table.put_item(
+            Item={
+                'order_id':  response['Items'][0]['order_id'],
+                'coffeeSize' :  response['Items'][0]['coffeeSize'] ,
+                'coffeeType' :  response['Items'][0]['coffeeType'] ,
+                'beanOrigin' :  response['Items'][0]['beanOrigin'] ,
+                'timestamp' :  response['Items'][0]['timestamp'] ,
+                'isCurrent': 'false',
+                'status': 'complete',
+            }
+       )
+
+    # 2. change the current order status
     response = table.query (
         KeyConditionExpression=Key('order_id').eq(oid)
     )
-    print '--------'
+    print '2--------'
     print response['Items'][0]['order_id']
 
-    if response['Items'][0]['order_id']:
+    if response['Items']:
         response = table.put_item(
             Item={
                 'order_id':  response['Items'][0]['order_id'],
